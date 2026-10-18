@@ -17,4 +17,4 @@
 ## Платформы
 Репозиторий зеркалируется на две платформы. Форкай ту, где тебе удобнее:
 - GitHub: [`<ссылка_на_github>`](https://github.com/NKhashchanov/total_designing_db_2026)
-- GitVerse: `<ссылка_на_gitverse>`
+- GitVerse: [`<ссылка_на_gitverse>`](https://gitverse.ru/nkhashchanov/total_designing_db_2026)
