@@ -207,20 +207,18 @@
 
 ## Сводка
 
-| Тикет | Что делает | Баллы |
+| Тикет | Что делает | Вес |
 |---|---|---|
-| FOOD-101 | Схема, типы, ограничения, 3НФ |  |
-| FOOD-102 | `insert_test_data` |  |
+| FOOD-101 | Схема, типы, ограничения, 3НФ | 0.2 |
+| FOOD-102 | `insert_test_data` | 0.2 |
 | FOOD-103 | `erase_test_data` | входит в FOOD-102 |
-| FOOD-104 | `add_product` |  |
-| FOOD-105 | `rating_change` триггер |  |
-| FOOD-106 | `get_statistic` |  |
-| FOOD-107 | `courier_salary` |  |
-| FOOD-108 | `how_much_money` |  |
-| FOOD-109 | `inspector` |  |
-| FOOD-110 | `.backup` |  |
-
-**Итого: N баллов.**
+| FOOD-104 | `add_product` | 0.05 |
+| FOOD-105 | `rating_change` триггер | 0.1 |
+| FOOD-106 | `get_statistic` | 0.1 |
+| FOOD-107 | `courier_salary` | 0.1 |
+| FOOD-108 | `how_much_money` | 0.1 |
+| FOOD-109 | `inspector` | 0.05 |
+| FOOD-110 | `.backup` | 0.1 |
 
 Для каждого курса или потока фактическое количество баллов по каждому пункту прописано в личном кабинете.
 
