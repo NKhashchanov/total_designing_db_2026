@@ -65,7 +65,7 @@ FROM pg_extension WHERE extname = 'uuid-ossp';
 Ожидается: `uuid-ossp`, схема `exts`.
 Факт: ___
 
-### B.3. Все 13 исходных таблиц + N после нормализации
+### B.3. Все 12 исходных таблиц + N после нормализации
 
 ```sql
 SELECT table_name FROM information_schema.tables
@@ -73,7 +73,7 @@ WHERE table_schema = '<фамилия>_food'
 ORDER BY table_name;
 ```
 
-Ожидается: `address`, `client`, `client_address`, `courier`, `courier_pay`, `order`, `order_structure`, `payment`, `product`, `product_category`, `restaurant`, `review` (13 + N штук).
+Ожидается: `address`, `client`, `client_address`, `courier`, `courier_pay`, `order`, `order_structure`, `payment`, `product`, `product_category`, `restaurant`, `review` (12 + N штук).
 Факт: ___
 
 ### B.4. Все PK — `uuid`
@@ -649,7 +649,7 @@ WHERE table_schema = '<фамилия>_food';
 RESET ROLE;
 ```
 
-Ожидается: 13 (количество таблиц).
+Ожидается: 12 + N (количество таблиц).
 Факт: ___
 
 ### G.4. `pg_catalog` читается под `inspector`
@@ -661,7 +661,7 @@ WHERE schemaname = '<фамилия>_food';
 RESET ROLE;
 ```
 
-Ожидается: 13.
+Ожидается: 12 + N.
 Факт: ___
 
 ### G.5. Все процедуры/функции работают под `inspector`
