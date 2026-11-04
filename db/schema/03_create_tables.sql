@@ -157,12 +157,12 @@ create table payment (
     order_id uuid not null,
     payment_type payment_type not null,
     amount numeric(10, 2) not null,
-    transaction_id varchar(100),
+    transaction_ varchar(100),
     payment_timestamp timestamp not null default localtimestamp,
     status payment_status not null default 'в_обработке'
 );
 alter table payment add constraint pk_payment primary key (payment_id);
-alter table payment add constraint uq_payment_transaction unique (transaction_id);
+alter table payment add constraint uq_payment_transaction unique (transaction_);
 alter table payment add constraint fk_payment_order foreign key (order_id) references "order" (order_id);
 alter table payment add constraint chk_payment_amount_non_negative check (amount >= 0);
 create unique index uq_payment_one_success_per_order on payment (order_id) where status = 'успех';
@@ -186,5 +186,5 @@ alter table review add constraint fk_review_client
 alter table review add constraint fk_review_order 
 		foreign key (order_id)  references "order" (order_id) on delete cascade;
 alter table review add constraint chk_review_rating_range check (rating >= 1 and rating <= 5);
-alter table review add constraint chk_review_desc_not_empty check (length(trim(description)) > 0);
+
 
