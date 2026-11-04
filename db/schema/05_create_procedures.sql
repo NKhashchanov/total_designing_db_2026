@@ -85,6 +85,15 @@ declare
   m_date$d date;
   m_year$i int;
   m_month$i int;
+
+  enums_courier_status$c courier_status[] := enum_range(null::courier_status);
+  enums_product_status$c product_status[] := enum_range(null::product_status);
+  enums_restaurant_status$c restaurant_status[] := enum_range(null::restaurant_status);
+  enums_order_status$c order_status[] := enum_range(null::order_status);
+  enums_order_pay_status$c order_pay_status[] := enum_range(null::order_pay_status);
+  enums_payment_status$c payment_status[] := enum_range(null::payment_status);
+  enums_payment_type$c payment_type[] := enum_range(null::payment_type);
+  enums_review_type$c review_entity_type[] := enum_range(null::review_entity_type);
 begin
   if val$i is null or val$i <= 0 then
     return;
@@ -146,7 +155,7 @@ begin
         courier_id$u,
         'курьер активный ' || nextval('seq_courier_num')::text,
         '+78' || lpad(nextval('seq_courier_phone')::text, 9, '0'),
-        'свободен',
+        enums_courier_status$c[1],
         current_date - interval '8 months',
         null,
         0.1
@@ -158,7 +167,7 @@ begin
         courier_id$u,
         'курьер уволенный ' || nextval('seq_courier_num')::text,
         '+78' || lpad(nextval('seq_courier_phone')::text, 9, '0'),
-        'уволен',
+        enums_courier_status$c[4],
         current_date - interval '8 months',
         current_date - interval '1 month',
         0.1
@@ -169,7 +178,7 @@ begin
         courier_id$u,
         'курьер ' || nextval('seq_courier_num')::text,
         '+78' || lpad(nextval('seq_courier_phone')::text, 9, '0'),
-        'свободен',
+        enums_courier_status$c[1],
         current_date - interval '8 months',
         null,
         0.1
@@ -204,7 +213,7 @@ begin
       time '23:00:00',
       'инн ' || lpad(floor(random() * 8999999999 + 1000000000)::bigint::text, 10, '0') || ', огрн 1234567890123',
       null,
-      'активен'
+      enums_restaurant_status$c[1]
     );
     restaurants$u := array_append(restaurants$u, rest_id$u);
   end loop;
@@ -225,7 +234,7 @@ begin
         rest_id$u,
         'https://foodexpress.ru/img/' || md5(random()::text) || '.jpg',
         null,
-        'доступно',
+        enums_product_status$c[1],
         'вкусное свежее блюдо'
       );
     end loop;
@@ -253,10 +262,10 @@ begin
 
     -- 90% заказов доставлены, 10% готовятся
     if j$i % 10 != 0 then
-      order_status$c := 'доставлен';
+      order_status$c := enums_order_status$c[4];
       delivery_ts$t := order_ts$t + interval '35 minutes';
     else
-      order_status$c := 'готовится';
+      order_status$c := enums_order_status$c[2];
       delivery_ts$t := null;
     end if;
 
@@ -285,7 +294,7 @@ begin
       order_timestamp, delivery_timestamp, order_amount, status, pay_status, description
     ) values (
       order_id$u, cur_courier$u, cur_client$u, cur_addr$u, cur_rest$u,
-      order_ts$t, delivery_ts$t, order_amt$n, order_status$c, 'оплачен', 'тестовый заказ'
+      order_ts$t, delivery_ts$t, order_amt$n, order_status$c, enums_order_pay_status$c[2], 'тестовый заказ'
     );
 
     -- позиции заказа
@@ -305,11 +314,11 @@ begin
     ) values (
       exts.uuid_generate_v4(),
       order_id$u,
-      'карта',
+      enums_payment_type$c[(j$i % 3) + 1],
       tot_amt$n,
       'tx_' || md5(random()::text || order_id$u::text),
       order_ts$t,
-      'успех'
+      enums_payment_status$c[1]
     );
 
     -- отзыв
@@ -322,7 +331,7 @@ begin
         order_id$u,
         order_ts$t + interval '1 hour',
         dish1$u,
-        'блюдо',
+        enums_review_type$c[1],
         'отличное блюдо, вкусно!',
         null,
         (3.0 + (j$i % 3))
@@ -336,7 +345,7 @@ begin
         order_id$u,
         order_ts$t + interval '1 hour',
         cur_rest$u,
-        'ресторан',
+        enums_review_type$c[2],
         'отличный ресторан!',
         null,
         (4.0 + (j$i % 2))
@@ -345,20 +354,20 @@ begin
   end loop;
 
   -- 8. пересчет рейтингов
-update product
-   set rating = (
-         select round(avg(rating), 2)
-           from review
-          where entity_type = 'блюдо'
-            and entity_id = product_id
-       );
-update restaurant
-   set rating = (
-         select round(avg(rating), 2)
-           from review
-          where entity_type = 'ресторан'
-            and entity_id = restaurant_id
-       );
+  update product
+     set rating = (
+           select round(avg(rating), 2)
+             from review
+            where entity_type = enums_review_type$c[1]
+              and entity_id = product_id
+         );
+  update restaurant
+     set rating = (
+           select round(avg(rating), 2)
+             from review
+            where entity_type = enums_review_type$c[2]
+              and entity_id = restaurant_id
+         );
 
   -- 9. зарплата курьеров
   for i$i in 1..array_length(couriers$u, 1) loop
@@ -377,7 +386,7 @@ update restaurant
 			 comm_sum$n
         from "order"
        where courier_id = courier_id$u
-         and status = 'доставлен'
+         and status = enums_order_status$c[4]
          and extract(year from order_timestamp) = m_year$i
          and extract(month from order_timestamp) = m_month$i;
 
@@ -407,7 +416,7 @@ update restaurant
     update courier
        set coefficient = curr_coef$n
      where courier_id = courier_id$u
-       and status != 'уволен';
+       and status != enums_courier_status$c[4];
   end loop;
 end;
 $$ language plpgsql;
