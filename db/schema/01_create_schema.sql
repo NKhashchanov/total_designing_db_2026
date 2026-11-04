@@ -1,6 +1,6 @@
 create schema if not exists popov_food;
 /**
  * только на своей локальной БД
-CREATE SCHEMA IF NOT EXISTS exts;
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" SCHEMA exts;
+create schema if not exists exts;
+create extension if not exists "uuid-ossp" schema exts;
 */
