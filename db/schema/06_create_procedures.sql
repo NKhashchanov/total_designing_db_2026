@@ -46,7 +46,7 @@ begin
     p_price,
     p_restaurant_id,
     p_photo_url,
-    p_rating,
+    null,
     coalesce(p_status, 'доступно'),
     p_description
   );
