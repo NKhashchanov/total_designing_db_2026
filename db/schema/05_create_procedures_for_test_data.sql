@@ -252,7 +252,6 @@ begin
     cur_rest$u := restaurants$u[(j$i - 1) % val$i + 1];
     cur_client$u := clients$u[(j$i - 1) % val$i + 1];
 
-    -- адрес доставки из адресов клиента
     select address_id
       into cur_addr$u
       from client_address
@@ -260,7 +259,6 @@ begin
      order by address_id
      limit 1;
 
-    -- 90% заказов доставлены, 10% готовятся
     if j$i % 10 != 0 then
       order_status$c := enums_order_status$c[4];
       delivery_ts$t := order_ts$t + interval '35 minutes';
@@ -269,7 +267,6 @@ begin
       delivery_ts$t := null;
     end if;
 
-    -- 2 блюда из ресторана
     select array_agg(product_id), 
            array_agg(price)
       into prod_ids$u, 
@@ -406,7 +403,6 @@ begin
         next_coef$n := 0.5;
       end if;
 
-      -- если курьер не уволен, коэффициент обновляется на следующий месяц (BR-10.6)
       if not exists (select 1 from courier where courier_id = courier_id$u and status = 'уволен') then
         curr_coef$n := next_coef$n;
       end if;*/
