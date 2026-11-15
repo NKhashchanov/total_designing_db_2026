@@ -230,9 +230,8 @@ BEGIN
                 END,
                 NULL,                                   -- рейтинг посчитаю в конце по отзывам
                 v_prstatus,
-                CASE WHEN random() < 0.3 THEN NULL      -- описания может не быть
-                     ELSE substr(v_pool, 1 + floor(random() * (c_pool_len - 255))::int, 1 + floor(random() * 255)::int)
-                END)
+                -- описание блюда обязательно (BR-5.2)
+                substr(v_pool, 1 + floor(random() * (c_pool_len - 255))::int, 1 + floor(random() * 255)::int))
         RETURNING product_id INTO v_id;
 
         v_product_ids    := v_product_ids    || v_id;

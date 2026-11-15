@@ -54,10 +54,10 @@ CREATE INDEX client_address_address_idx ON bokareva_food.client_address (address
 
 -- юрлица (реквизиты ресторанов), BR-4.5
 -- раньше реквизиты лежали одной строкой restaurant.company_details - это нарушало 1НФ
--- (в одном поле три значения: ИНН, ОГРН, р/с). Разбить на три колонки прямо в restaurant
--- тоже плохо: у сети ресторанов одно юрлицо, и ОГРН/счёт зависели бы от ИНН,
--- а не от restaurant_id - транзитивная зависимость, нарушение 3НФ.
--- Поэтому юрлицо - отдельная таблица, ресторан ссылается на неё.
+-- (в одном поле три значения: ИНН, ОГРН, р/с). Реквизиты разбиты на поля и вынесены
+-- в отдельную таблицу. Связь с рестораном один к одному: у каждого ресторана свои
+-- реквизиты (BR-4.1), и одни реквизиты не могут принадлежать двум ресторанам
+-- (restaurant_legal_entity_uq в restaurant).
 CREATE TABLE bokareva_food.legal_entity (
     legal_entity_id uuid        NOT NULL DEFAULT exts.uuid_generate_v4(),
     inn             varchar(12) NOT NULL,          -- 10 цифр у организации, 12 у ИП
@@ -88,6 +88,8 @@ CREATE TABLE bokareva_food.restaurant (
     status          bokareva_food.restaurant_status NOT NULL DEFAULT 'активен',
     CONSTRAINT restaurant_pk PRIMARY KEY (restaurant_id),
     CONSTRAINT restaurant_address_uq UNIQUE (address_id),
+    -- связь с юрлицом один к одному: NOT NULL + FK + UNIQUE
+    CONSTRAINT restaurant_legal_entity_uq UNIQUE (legal_entity_id),
     CONSTRAINT restaurant_address_fk FOREIGN KEY (address_id)
         REFERENCES bokareva_food.address (address_id) ON DELETE RESTRICT,
     CONSTRAINT restaurant_legal_entity_fk FOREIGN KEY (legal_entity_id)
@@ -97,7 +99,6 @@ CREATE TABLE bokareva_food.restaurant (
     CONSTRAINT restaurant_work_hours_chk            CHECK (work_end > work_start),
     CONSTRAINT restaurant_rating_chk                CHECK (rating BETWEEN 0 AND 5)
 );
-CREATE INDEX restaurant_legal_entity_idx ON bokareva_food.restaurant (legal_entity_id);
 
 
 -- курьеры
@@ -163,7 +164,7 @@ CREATE TABLE bokareva_food.product (
     photo_url           text         NULL,         -- фото может не быть
     rating              numeric(3,2) NULL,         -- считает триггер, без отзывов NULL
     status              bokareva_food.product_status NOT NULL DEFAULT 'доступно',
-    description         text         NULL,         -- описания может не быть
+    description         text         NOT NULL,     -- обязательно: BR-5.2, необязательно только фото (BR-5.6)
     CONSTRAINT product_pk PRIMARY KEY (product_id),
     CONSTRAINT product_category_fk FOREIGN KEY (product_category_id)
         REFERENCES bokareva_food.product_category (product_category_id) ON DELETE RESTRICT,
@@ -173,7 +174,7 @@ CREATE TABLE bokareva_food.product (
     CONSTRAINT product_price_chk                 CHECK (price >= 0),
     CONSTRAINT product_rating_chk                CHECK (rating BETWEEN 0 AND 5),
     CONSTRAINT product_photo_not_blank_chk       CHECK (photo_url IS NULL OR btrim(photo_url) <> ''),
-    CONSTRAINT product_description_not_blank_chk CHECK (description IS NULL OR btrim(description) <> '')
+    CONSTRAINT product_description_not_blank_chk CHECK (btrim(description) <> '')
 );
 CREATE INDEX product_restaurant_idx ON bokareva_food.product (restaurant_id);
 CREATE INDEX product_category_idx   ON bokareva_food.product (product_category_id);
@@ -190,8 +191,8 @@ CREATE TABLE bokareva_food."order" (
     delivery_timestamp timestamp    NULL,          -- заполняется когда доставили
     order_amount       numeric(8,2) NOT NULL,      -- до 999 999.99 за заказ
     -- комиссия 10% и итог считает сама база, руками их не записать (BR-1.4, 7.10)
-    commission         numeric(8,2) GENERATED ALWAYS AS (round(order_amount * 0.10, 2)) STORED,
-    total_amount       numeric(9,2) GENERATED ALWAYS AS (order_amount + round(order_amount * 0.10, 2)) STORED,
+    commission         numeric(8,2) NOT NULL GENERATED ALWAYS AS (round(order_amount * 0.10, 2)) STORED,
+    total_amount       numeric(9,2) NOT NULL GENERATED ALWAYS AS (order_amount + round(order_amount * 0.10, 2)) STORED,
     status             bokareva_food.order_status     NOT NULL DEFAULT 'создан',
     pay_status         bokareva_food.order_pay_status NOT NULL DEFAULT 'ожидает',
     description        text         NULL,          -- комментарий клиента, необязателен
